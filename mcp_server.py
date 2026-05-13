@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-QwenKB V1.0 — MCP 服务器
+QwenKB V1.0.1 — MCP 服务器
 通过 HTTP 暴露 search_knowledge_base 工具，供 opencode 等 MCP 客户端调用
 """
 import os
 import sys
 import json
 import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from openai import OpenAI
@@ -18,13 +19,24 @@ import httpx
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        RotatingFileHandler(
+            str(Path(__file__).resolve().parent / "mcp_server.log"),
+            maxBytes=5 * 1024 * 1024,
+            backupCount=3,
+            encoding="utf-8",
+        )
+    ],
+)
 logger = logging.getLogger("QwenKB-MCP")
 
 def get_base_dir():
     return Path(__file__).resolve().parent
 
-app = FastAPI(title="QwenKB MCP Server", version="1.0.0")
+app = FastAPI(title="QwenKB MCP Server", version="1.0.1")
 
 _oai_client = None
 _chroma_collection = None
@@ -40,15 +52,24 @@ def get_oai_client():
 
 def get_collection():
     global _chroma_collection
+    chroma_dir = str(get_base_dir() / config.CHROMA_DIR)
+    if not os.path.exists(chroma_dir):
+        raise RuntimeError(f"ChromaDB 不存在: {chroma_dir}。请先运行 build_kb.py 建库。")
+    chroma_client = chromadb.PersistentClient(path=chroma_dir)
     if _chroma_collection is None:
-        chroma_dir = str(get_base_dir() / config.CHROMA_DIR)
-        if not os.path.exists(chroma_dir):
-            raise RuntimeError(f"ChromaDB 不存在: {chroma_dir}。请先运行 build_kb.py 建库。")
-        chroma_client = chromadb.PersistentClient(path=chroma_dir)
         try:
             _chroma_collection = chroma_client.get_collection(name="qwenkb_docs")
         except Exception as e:
             raise RuntimeError(f"未找到知识库集合: {e}")
+    else:
+        try:
+            _chroma_collection.count()
+        except Exception as e:
+            if "does not exist" in str(e) or "not found" in str(e):
+                logger.info("集合已被更新，重新加载 ChromaDB 集合...")
+                _chroma_collection = chroma_client.get_collection(name="qwenkb_docs")
+            else:
+                raise e
     return _chroma_collection
 
 def check_lm_studio_health() -> tuple[bool, str]:
@@ -164,7 +185,7 @@ async def mcp_endpoint(request: dict):
             "result": {
                 "tools": [{
                     "name": "search_knowledge_base",
-                    "description": "搜索本地知识库，返回最相关的文档段落。调用此工具来检索文档中的信息。",
+                    "description": "【优先调用】遇到以下情况应优先使用此工具搜索本地知识库：① 用户询问的信息可能属于个人私有数据或特定工作环境；② 问题涉及你训练数据中可能不存在的特定人物、地点或事件；③ 你对答案不确定，需要从本地文档中查找事实依据。调用此工具来检索本地知识库中的文档信息。",
                     "inputSchema": {
                         "type": "object",
                         "properties": {
@@ -215,7 +236,7 @@ async def mcp_endpoint(request: dict):
             "id": req_id,
             "result": {
                 "protocolVersion": "2024-11-05",
-                "serverInfo": {"name": "QwenKB", "version": "1.0.0"},
+                "serverInfo": {"name": "QwenKB", "version": "1.0.1"},
                 "capabilities": {"tools": {}}
             }
         })
@@ -232,7 +253,7 @@ async def mcp_endpoint(request: dict):
         }, status_code=404)
 
 def main():
-    logger.info(f"QwenKB MCP Server V1.0 启动中...")
+    logger.info(f"QwenKB MCP Server V1.0.1 启动中...")
     logger.info(f"LM Studio: {config.EMBEDDING_API_URL}")
     logger.info(f"ChromaDB: {get_base_dir() / config.CHROMA_DIR}")
     logger.info(f"监听: http://{config.MCP_SERVER_HOST}:{config.MCP_SERVER_PORT}")

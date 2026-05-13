@@ -71,8 +71,6 @@ switch ($choice) {
         & $NssmExe set $ServiceName DisplayName "QwenKB MCP Server" 2>&1
         & $NssmExe set $ServiceName Description "QwenKB Knowledge Base MCP Server" 2>&1
         & $NssmExe set $ServiceName Start SERVICE_AUTO_START 2>&1
-        & $NssmExe set $ServiceName AppStdout (Join-Path $ScriptDir "service_stdout.log") 2>&1
-        & $NssmExe set $ServiceName AppStderr (Join-Path $ScriptDir "service_stderr.log") 2>&1
 
         Write-Host "Service installed." -ForegroundColor Green
         Write-Host "Starting..." -ForegroundColor Gray
