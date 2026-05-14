@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# IDE
+.idea/
+
+# Logs
+*.log
+
+# Docs (ignore all except placeholder)
+docs/*
+!docs/.gitkeep
+
+# Vector database (ignore all except placeholder)
+chroma_db/*
+!chroma_db/.gitkeep
