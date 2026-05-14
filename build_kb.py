@@ -53,22 +53,64 @@ def read_md(filepath: str) -> str:
     return read_txt(filepath)
 
 SUPPORTED_EXT = {
+    # 文档类
     ".pdf":  read_pdf,
     ".docx": read_docx,
     ".txt":  read_txt,
     ".md":   read_md,
+    # 源代码类
+    ".py":   read_txt,
+    ".js":   read_txt,
+    ".ts":   read_txt,
+    ".java": read_txt,
+    ".c":    read_txt,
+    ".cpp":  read_txt,
+    ".go":   read_txt,
+    ".rs":   read_txt,
+    ".r":    read_txt,
+    ".R":    read_txt,
+    ".sh":   read_txt,
+    ".ps1":  read_txt,
+    ".swift": read_txt,
+    ".kt":   read_txt,
+    ".rb":   read_txt,
+    ".lua":  read_txt,
+    ".sql":  read_txt,
+    # 配置/数据类
+    ".json": read_txt,
+    ".yaml": read_txt,
+    ".yml":  read_txt,
+    ".csv":  read_txt,
+    ".xml":  read_txt,
+    ".toml": read_txt,
+    ".ini":  read_txt,
+    ".cfg":  read_txt,
+    ".conf": read_txt,
+    ".log":  read_txt,
+    ".html": read_txt,
+    ".css":  read_txt,
 }
 
 def load_all_documents(docs_dir: Path) -> List[dict]:
-    """遍历文件夹，加载所有支持的文档，返回 [{path, text}] 列表"""
+    """递归遍历文件夹，加载所有支持的文档，返回 [{path, text}] 列表"""
     documents = []
-    for ext in SUPPORTED_EXT:
-        for f in docs_dir.glob(f"*{ext}"):
+    seen = set()
+
+    for ext, reader_fn in SUPPORTED_EXT.items():
+        for f in docs_dir.glob(f"**/*{ext}"):
+            if not f.is_file():
+                continue
+            key = str(f.resolve())
+            if key in seen:
+                continue
+            seen.add(key)
+
             try:
-                text = SUPPORTED_EXT[ext](str(f))
+                text = reader_fn(str(f))
                 if text.strip():
+                    rel = f.relative_to(docs_dir)
                     documents.append({"path": str(f), "text": text})
-                    print(f"  [OK] {f.name} ({len(text)} 字)")
+                    print(f"  [OK] {rel} ({len(text)} 字)")
                 else:
                     print(f"  [跳过] {f.name} (无文字内容)")
             except Exception as e:
