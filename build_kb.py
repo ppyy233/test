@@ -194,7 +194,7 @@ def build_knowledge_base(collection_name: str = None):
     docs_dir = base_dir / config.DOCS_DIR
 
     print("=" * 60)
-    print("  QwenKB V1.1 — 知识库构建 (Client-Server)")
+    print("  QwenKB V1.1 — 知识库构建 (C/S)")
     print("=" * 60)
 
     if not docs_dir.exists():
@@ -258,7 +258,7 @@ def build_knowledge_base(collection_name: str = None):
 
     collection = chroma_client.create_collection(
         name=collection_name,
-        metadata={"hnsw:space": "cosine"},
+        metadata={"hnsw:space": "cosine", "hnsw:sync_threshold": 100000},
     )
 
     add_batch_size = 50
