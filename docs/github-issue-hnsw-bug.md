@@ -65,7 +65,7 @@ col2.count()  # ❌ InternalError: Error loading hnsw index
 
 ### Runnable reproduction scripts
 
-Available at [github.com/ppyy233/qwen-embedding-MCP-/tree/master/tests](https://github.com/ppyy233/qwen-embedding-MCP-/tree/master/tests):
+Available at [github.com/ppyy233/test/tree/master/tests](https://github.com/ppyy233/test/tree/master/tests):
 
 | Script | Purpose |
 |--------|---------|
