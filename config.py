@@ -17,7 +17,10 @@ DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 # ====== 文档和存储路径 ======
 # 这些是相对于本 config.py 所在目录的路径
 DOCS_DIR   = "docs"         # 放 PDF/Word/TXT 的文件夹
-CHROMA_DIR = "chroma_db"    # 向量数据库存储文件夹
+CHROMA_DIR = "chroma_db"    # 向量数据库存储文件夹（ChromaDB Server 使用）
+CHROMA_SERVER_HOST = "127.0.0.1"
+CHROMA_SERVER_PORT = 9898
+COLLECTION_NAME    = "qwenkb_docs"
 
 # ====== 文档切片参数 ======
 CHUNK_SIZE    = 500   # 每块最多 500 字（中文一个汉字 = 1 字）
